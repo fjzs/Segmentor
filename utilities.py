@@ -3,13 +3,12 @@ import pandas as pd
 import time
 import tensorflow as tf
 from PIL import Image
-import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from PIL import ImageOps
 
-def iou_per_class(model, image_for_prediction): #can change the model as needed
+def iou_per_class(model, image_for_prediction, labels): #can change the model as needed
   '''
-  call function like: utilities.iou_per_class('modelDeepLabV3_Mila.tflite', '2008_000491.jpg')
+  call function like: utilities.iou_per_class('modelDeepLabV3_Mila.tflite', '2008_000491.jpg', labels)
     What does this function do?
     - This function will calculate the IoU
     The input image will be transformed to a segmentation map where the classes per pixel value will be found.
@@ -18,6 +17,9 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
     Arguments:
     - param1 (.tflite): a  segmentation model
     - param2 (.jpg): a picture from pascal
+    - labels (pd.DataFrame) : A dataFrame containing the labels to be compared , first column must include the images and the name should be image_filename	
+    the rest of the columns should be labeled 0 to 19 and correspond to the class number of the data set
+    see:  pd.read_csv('https://raw.githubusercontent.com/fjzs/Segmentor/main/datasets/pascal/pascal_segmented_classes_per_image.csv', index_col=1).drop('Unnamed: 0', axis = 1)
 
     Returns:
     - iou_score (float), iou_per_class_array (float array size 1x20 an entry per class), time_milisecs (time in miliseconds)
@@ -88,9 +90,7 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
   #real iou part 
   prediction = np.unique(seg_map)
   #For the target, find the label array corresponding to the input image
-  #change pascal_segmented_classes_per_image.csv to local path
-  labels = pd.read_csv('/datasets/pascal/pascal_segmented_classes_per_image.csv', index_col=1).drop('Unnamed: 0', axis = 1)
-  specific_pic_classes = labels.filter(like= image_name	,  axis =0)#here test
+  specific_pic_classes = labels.filter(like= image_name    ,  axis =0)#here test
   specific_pic_class_array = specific_pic_classes.to_numpy()
   
 
