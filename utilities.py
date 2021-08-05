@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import time
+
 def iou_per_class(model, image_for_prediction): #can change the model as needed
   '''
   call function like: utilities.iou_per_class('modelDeepLabV3_Mila.tflite', '2008_000491.jpg')
@@ -8,14 +10,15 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
     The input image will be transformed to a segmentation map where the classes per pixel value will be found.
     After having the classes per image that the model detected, it will be compared to the labeled classes for that image:
     these are found in the pascal_segmented_classes_per_image.csv' folder. The IoU will be compared by detecting the subsets of classes in the intersection per union.
-
     Arguments:
     - param1 (.tflite): a  segmentation model
     - param2 (.jpg): a picture from pascal
     
     Returns:
-    - a tuple: float:mIoU, array of floats: IoU_array
-
+    - a tuple: 
+    float:mIoU
+    array of floats: IoU_array
+    float: time in seconds
   '''
   image_name = image_for_prediction
   import tensorflow as tf
@@ -67,7 +70,7 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
   image_for_prediction = image_for_prediction / 127.5 - 1
     
   # Invoke the interpreter to run inference.
-
+  
   interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
   interpreter.invoke()
 
@@ -78,8 +81,9 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
   interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
    # Invoke the interpreter.
   interpreter.invoke()
-
+  start = time.time()
   predictions_array = interpreter.get_tensor(output_index)
+  end = time.time()
   raw_prediction = predictions_array
   ##  resize then argmax - this is used in some other frozen graph and produce smoother output
   width, height = cropped_image.size
@@ -108,4 +112,4 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
   iou_per_class_array = np.nan_to_num(intersection/union)
   
 
-  return iou_score, iou_per_class_array
+  return iou_score, iou_per_class_array, end-start
