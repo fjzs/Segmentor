@@ -20,7 +20,7 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
     - param2 (.jpg): a picture from pascal
 
     Returns:
-    - iou_score (float), iou_per_class_array (float array size 1x20 an entry per class), time-milisec (time in miliseconds)
+    - iou_score (float), iou_per_class_array (float array size 1x20 an entry per class), time_milisecs (time in miliseconds)
     
   '''
 
