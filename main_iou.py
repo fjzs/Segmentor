@@ -16,7 +16,7 @@ image_path = tst_path + '/Segmentation_input/validation'
 image_for_prediction = create_image_array(image_list, image_path)
 
 # Calculate iou?
-iou_m(model='modelDeepLabV3_Mila.tflite', labels, image_for_prediction)
+iou_m('modelDeepLabV3_Mila.tflite', labels, image_for_prediction)
 
 # Calculate uou per class?
-iou_per_class(model = 'modelDeepLabV3_Mila.tflite', labels, image_for_prediction) 
+iou_per_class('modelDeepLabV3_Mila.tflite', labels, image_for_prediction) 

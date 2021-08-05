@@ -1,5 +1,11 @@
 import numpy as np
 import pandas as pd
+import tensorflow as tf
+from PIL import Image
+from PIL import ImageOps
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+
 
 #first definition, compact
 def iou_(target, prediction):
@@ -21,13 +27,8 @@ def iou_(target, prediction):
 # Find IOU Given image and model
 # Load the model and image.
 
-def iou_m(model='modelDeepLabV3_Mila.tflite', labels, image_for_prediction): #can change the model
+def iou_m(model, labels, image_for_prediction): #can change the model
   image_name = image_for_prediction
-  import tensorflow as tf
-  from PIL import Image
-  from PIL import ImageOps
-  import matplotlib.pyplot as plt
-  import matplotlib.image as mpimg
 
   # read_img = mpimg.imread(image_for_prediction)
   # image = Image.fromarray(read_img)
@@ -111,13 +112,8 @@ def iou_m(model='modelDeepLabV3_Mila.tflite', labels, image_for_prediction): #ca
   # Find IOU Given image and model
 # Load the model and image
 
-def iou_per_class(model = 'modelDeepLabV3_Mila.tflite', labels, image_for_prediction): #can change the model
+def iou_per_class(model, labels, image_for_prediction): #can change the model
   image_name = image_for_prediction
-  import tensorflow as tf
-  from PIL import Image
-  from PIL import ImageOps
-  import matplotlib.pyplot as plt
-  import matplotlib.image as mpimg
 
   # read_img = mpimg.imread(image_for_prediction)
   # image = Image.fromarray(read_img)
