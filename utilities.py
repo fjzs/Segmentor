@@ -89,7 +89,7 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
   prediction = np.unique(seg_map)
   #For the target, find the label array corresponding to the input image
   #change pascal_segmented_classes_per_image.csv to local path
-  labels = pd.read_csv('https://raw.githubusercontent.com/fjzs/Segmentor/main/datasets/pascal/pascal_segmented_classes_per_image.csv', index_col=1).drop('Unnamed: 0', axis = 1)
+  labels = pd.read_csv('/datasets/pascal/pascal_segmented_classes_per_image.csv', index_col=1).drop('Unnamed: 0', axis = 1)
   specific_pic_classes = labels.filter(like= image_name	,  axis =0)#here test
   specific_pic_class_array = specific_pic_classes.to_numpy()
   
