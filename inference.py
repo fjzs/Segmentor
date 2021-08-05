@@ -200,7 +200,7 @@ def get_category(img):
 
         # #Prediction: (1, 257, 257, 21)
 
-    return vis_segmentation(image, seg_map) #get category function return statement
+    return vis_segmentation(cropped_image, seg_map) #get category function return statement
     #predictions_array.shape #class_names[predicted_label] 
 
 
