@@ -1,6 +1,11 @@
 import numpy as np
 import pandas as pd
 import time
+import tensorflow as tf
+from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+from PIL import ImageOps
 
 def iou_per_class(model, image_for_prediction): #can change the model as needed
   '''
@@ -17,18 +22,11 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
     Returns:
     - a tuple: 
     float:mIoU
-    array of floats: IoU_array
-    float: time in seconds
+    array of floats: IoU_array (array of size 1x20 each entry corresponding to a class)
+    float: time in miliseconds
   '''
+
   image_name = image_for_prediction
-  import tensorflow as tf
-  from PIL import Image
-  import matplotlib.pyplot as plt
-  import matplotlib.image as mpimg
-
-
-  from PIL import ImageOps
-
   interpreter = tf.lite.Interpreter(model_path=model)
   # Interpreter interface for TensorFlow Lite Models.
 
@@ -40,7 +38,7 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
   interpreter.allocate_tensors()
   input_img = mpimg.imread(image_for_prediction)
   image = Image.fromarray(input_img)
-  from PIL import ImageOps
+
 
   # Get image size - converting from BHWC to WH
   input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
@@ -53,8 +51,7 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
       new_size = (old_size[0], int(old_size[0] / desired_ratio))
   else:
       new_size = (int(old_size[1] * desired_ratio), old_size[1])
-  from PIL import ImageOps
-
+ 
   # Cropping the original image to the desired aspect ratio
   delta_w = new_size[0] - old_size[0]
   delta_h = new_size[1] - old_size[1]
@@ -93,6 +90,7 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
   #real iou part 
   prediction = np.unique(seg_map)
   #For the target, find the label array corresponding to the input image
+  #change pascal_segmented_classes_per_image.csv to local path
   labels = pd.read_csv('https://raw.githubusercontent.com/fjzs/Segmentor/main/datasets/pascal/pascal_segmented_classes_per_image.csv', index_col=1).drop('Unnamed: 0', axis = 1)
   specific_pic_classes = labels.filter(like= image_name	,  axis =0)#here test
   specific_pic_class_array = specific_pic_classes.to_numpy()
@@ -104,12 +102,12 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
   
 
   target = specific_pic_class_array
-  print(vector_form.shape)
-  print(target.shape)
   intersection = np.logical_and(target, vector_form)
   union = np.logical_or(target, vector_form)
   iou_score = np.sum(intersection) / np.sum(union)
   iou_per_class_array = np.nan_to_num(intersection/union)
+
+  time_milisecs= round((end-start) * 1000,4)
   
 
-  return iou_score, iou_per_class_array, end-start
+  return iou_score, iou_per_class_array, time_milisecs
