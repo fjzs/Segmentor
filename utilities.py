@@ -18,12 +18,10 @@ def iou_per_class(model, image_for_prediction): #can change the model as needed
     Arguments:
     - param1 (.tflite): a  segmentation model
     - param2 (.jpg): a picture from pascal
-    
+
     Returns:
-    - a tuple: 
-    float:mIoU
-    array of floats: IoU_array (array of size 1x20 each entry corresponding to a class)
-    float: time in miliseconds
+    - iou_score (float), iou_per_class_array (float array size 1x20 an entry per class), time-milisec (time in miliseconds)
+    
   '''
 
   image_name = image_for_prediction
