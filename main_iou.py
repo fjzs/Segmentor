@@ -51,8 +51,6 @@ header = np.hstack(('mIOU', col_head.tolist(), 'Speed (ms)'))
 rst =pd.DataFrame(iou_out, columns = header, index = image_list[:iou_out.shape[0]])
 print(rst.head())
 
-print('Processing image:' + img)
-
 # Do mean for evaluating the model performace
 iouave = iou_out.mean(axis=0)
 maiou = iouave[0]
