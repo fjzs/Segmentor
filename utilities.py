@@ -5,6 +5,7 @@ import tensorflow as tf
 from PIL import Image
 import matplotlib.image as mpimg
 from PIL import ImageOps
+import os
 
 def iou_per_class(model, image_for_prediction, labels): #can change the model as needed
   '''
@@ -90,16 +91,17 @@ def iou_per_class(model, image_for_prediction, labels): #can change the model as
   #real iou part 
   prediction = np.unique(seg_map)
   #For the target, find the label array corresponding to the input image
-  specific_pic_classes = labels.filter(like= image_name    ,  axis =0)#here test
+  specific_pic_classes = labels.filter(like= os.path.basename(image_name),  axis =0)#here test
   specific_pic_class_array = specific_pic_classes.to_numpy()
   
 
   vector_form = np.zeros((20,1))
+  prediction=prediction[prediction != 0]-1
   vector_form [prediction] = 1
   vector_form = vector_form.T
   
 
-  target = specific_pic_class_array
+  target = specific_pic_class_array.astype('float64')
   intersection = np.logical_and(target, vector_form)
   union = np.logical_or(target, vector_form)
   iou_score = np.sum(intersection) / np.sum(union)
