@@ -20,7 +20,7 @@ def fragment():
         file = request.files['file']
         save_image(file,"input")
         # Get category of prediction
-        model1 = 'lite-model_deeplabv3-mobilenetv2_dm05_1_default_2.tflite'
+        model1 = 'modelDeepLabV3_Mila.tflite'
         model2 = 'lite-model_deeplabv3-xception65_1_default_2.tflite'
         model3 = 'lite-model_mobilenetv2-coco_dr_1.tflite'
         get_category(img=file, model =model1 ) #saves output as image in static folder
