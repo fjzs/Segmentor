@@ -15,7 +15,7 @@ def format_image(image):
     return image #tf.image.resize(image[tf.newaxis, ...], [257, 257]) / 255.0 #[224, 224]) / 255.0  #Got 224 but expected 257 for dimension 1 of input 183.
 
 
-def get_category(img):
+def get_category(img, model):
     """Write a Function to Predict the Class Name
 
     Args:
@@ -26,8 +26,7 @@ def get_category(img):
     """
         #Prepare iage further for running inference *******
     path = 'static/model/'
-    tflite_model_file = 'modelDeepLabV3_Mila.tflite'#'lite-model_deeplabv3_1_metadata_2.tflite'#'converted_model.tflite'
-
+    tflite_model_file = model
     # Load TFLite model and allocate tensors.
     with open(path + tflite_model_file, 'rb') as fid:
         tflite_model = fid.read()
@@ -145,7 +144,7 @@ def get_category(img):
 
         return colormap[label]
 
-    def vis_segmentation(image, seg_map):
+    def vis_segmentation(image, seg_map, model):
   #"""Visualizes input image, segmentation map and overlay view."""
         plt.figure(figsize=(15, 5))
         grid_spec = gridspec.GridSpec(1, 4, width_ratios=[6, 6, 6, 1])
@@ -178,11 +177,12 @@ def get_category(img):
         plt.grid('off')
         # plt.show()
         fig = plt.gcf()
-        import io
-        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-        output = io.BytesIO()
-        FigureCanvas(fig).print_png(output)
-        return output
+        fig.savefig(f'static/images/pic_{model}.png')
+#         import io
+#         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+#         output = io.BytesIO()
+#         FigureCanvas(fig).print_png(output)
+#         return output
         #End of Vis_seg function
 
 
@@ -203,16 +203,15 @@ def get_category(img):
     return vis_segmentation(cropped_image, seg_map) #get category function return statement
     #predictions_array.shape #class_names[predicted_label] 
 
-
-def plot_category(img, current_time):
+def save_image(img, img_name):
     """Plot the input image
-
     Args:
         img [jpg]: image file
+        img_name[string]: name for the file
     """
     read_img = mpimg.imread(img)
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(ROOT_DIR + f'/static/images/output_{current_time}.png')
+    file_path = os.path.join(ROOT_DIR + f'/static/images/{img_name}.png')
     print(file_path)
 
     if os.path.exists(file_path):
