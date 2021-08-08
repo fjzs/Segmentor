@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 from img_utils import *
-#from stat_perform import *
-from utilities import *
+from stat_perform import *
+#from utilities import *
 
 '''
 This program will calculate the IoU per emage per class
@@ -24,11 +24,13 @@ mdl      = 'modelDeepLabV3_Mila.tflite'
 csv_in   = 'pascal_segmented_classes_per_image.csv'
 csv_out  = 'IOU_perclass.csv'
 
+
 labels = pd.read_csv(tst_path + csv_in, index_col=1).drop('Unnamed: 0', axis = 1)
 label_array = labels.to_numpy()
 col_head = labels.columns
-val_path = tst_path + 'Segmentation_input/validation2/' 
-val_path = 'C:/Users/adi/Downloads/VOC2012/SegmentationClass/'
+val_path = tst_path + 'Segmentation_input/validation/'
+seg_path = tst_path + 'Segmentation_output/validation/' 
+#val_path = 'C:/Users/adi/Downloads/VOC2012/SegmentationClass/'
 image_list = os.listdir(val_path)
 
 # # Get the test image
@@ -42,8 +44,9 @@ nimg = len(image_list)
 # Loop to compute the IOU
 for img in image_list:
         print('Processing image:' + img + ', immage no ' + str(i) + ' of ' + str(nimg))
-        anno_mat =  np.array(Image.open(val_path + img))
-        iou_score, ipclass, time_milisecs = iou_per_class(mdl_path + mdl, val_path + img, labels)
+        anno_mat =  np.array(Image.open(seg_path + os.path.splitext(img)[0] + '.png'))
+        #iou_score, ipclass, time_milisecs = iou_per_class(mdl_path + mdl, val_path + img, labels)
+        iou_score, time_milisecs = imgs_iou(mdl_path + mdl, val_path + img, anno_mat)
         iou_out.append(np.hstack((iou_score, np.squeeze(ipclass), time_milisecs)))
         i=i+1
 iou_out = np.array(iou_out)
