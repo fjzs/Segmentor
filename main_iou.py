@@ -27,11 +27,12 @@ csv_out  = 'IOU_perclass.csv'
 labels = pd.read_csv(tst_path + csv_in, index_col=1).drop('Unnamed: 0', axis = 1)
 label_array = labels.to_numpy()
 col_head = labels.columns
-image_path = tst_path + '/Segmentation_input/validation/' 
-image_list = os.listdir(image_path)
+val_path = tst_path + 'Segmentation_input/validation2/' 
+val_path = 'C:/Users/adi/Downloads/VOC2012/SegmentationClass/'
+image_list = os.listdir(val_path)
 
 # # Get the test image
-# image_for_prediction = create_image_array(image_list, image_path)
+# image_for_prediction = create_image_array(image_list, val_path)
 
 
 # Calculate # uou per class
@@ -40,8 +41,9 @@ i=1
 nimg = len(image_list)
 # Loop to compute the IOU
 for img in image_list:
-        print('Processing image:' + img + ', immage no ' + str(i) + ' of ' + str(nimg))      
-        iou_score, ipclass, time_milisecs = iou_per_class(mdl_path + mdl, image_path + img, labels)
+        print('Processing image:' + img + ', immage no ' + str(i) + ' of ' + str(nimg))
+        anno_mat =  np.array(Image.open(val_path + img))
+        iou_score, ipclass, time_milisecs = iou_per_class(mdl_path + mdl, val_path + img, labels)
         iou_out.append(np.hstack((iou_score, np.squeeze(ipclass), time_milisecs)))
         i=i+1
 iou_out = np.array(iou_out)
