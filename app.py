@@ -1,6 +1,6 @@
 from datetime import datetime
 from flask import Flask, request, render_template
-from inference import get_category, plot_category
+from inference import get_category,save_image
 
 app = Flask(__name__)
 
@@ -18,16 +18,18 @@ def fragment():
             return
         # Read file from upload
         file = request.files['file']
+        save_image(file,"input")
         # Get category of prediction
-        category = get_category(img=file)
-        # Plot the category
-        # now = datetime.now()
-        # current_time = now.strftime("%H-%M-%S")
-        # plot_category(file, current_time)
-        # Render the result template
-        from flask import Response
-        return Response(category.getvalue(), mimetype='image/png') # render_template('result.html', category=category, current_time=current_time)
+        model1 = 'lite-model_deeplabv3-mobilenetv2_dm05_1_default_2.url'
+        model2 = 'lite-model_deeplabv3-xception65_1_default_2.tflite'
+        model3 = 'lite-model_mobilenetv2-coco_dr_1.tflite'
+        get_category(img=file, model =model1 ) #saves output as image in static folder
+        get_category(img=file, model =model2 )
+        get_category(img=file, model =model3 )
 
+        #from flask import Response
+        return render_template('result.html', model1=model1, model2=model2, model3=model3)
+        #Response(category.getvalue(), mimetype='image/png') 
 
 if __name__ == '__main__':
     # app.run(debug=True)
