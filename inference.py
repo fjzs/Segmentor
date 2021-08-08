@@ -25,7 +25,7 @@ def get_category(img, model):
         [str]: Prediction
     """
         #Prepare image further for running inference *******
-    path = 'static/models/deep_lab_v3_plus'
+    path = 'static/models/'
     tflite_model_file = model
     # Load TFLite model and allocate tensors.
     with open(path + tflite_model_file, 'rb') as fid:
