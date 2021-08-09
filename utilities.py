@@ -104,8 +104,8 @@ def iou_per_pixelclass(model, image_for_prediction, image_target):
 
   iou = true_positive / (true_positive + false_positive + false_negative)
   #   iou[np.isnan(iou)] = 1
-
-  meaniou = np.nanmean(iou).astype(np.float32)
+  
+  meaniou = np.nanmean(iou).astype(np.float32)  # nanmean is used to neglect 0/0 case which arise due to absence of any class
   time_milisecs= round((end-start) * 1000,4)
 
   return meaniou, iou, time_milisecs
