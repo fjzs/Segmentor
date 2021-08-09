@@ -103,9 +103,9 @@ def iou_per_pixelclass(model, image_for_prediction, image_target):
   false_negative = np.sum(conf, 1) - true_positive
 
   iou = true_positive / (true_positive + false_positive + false_negative)
-  iou[np.isnan(iou)] = 1
+#   iou[np.isnan(iou)] = 1
 
-  meaniou = np.mean(iou).astype(np.float32)
+  meaniou = np.nanmean(iou).astype(np.float32)
 
   return meaniou, iou
 
