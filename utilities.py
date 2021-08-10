@@ -86,6 +86,7 @@ def iou_per_pixelclass(model, image_for_prediction, image_target):
   seg_map = tf.argmax(tf.image.resize(raw_prediction, image.size[::-1] ), axis=3)#(height, width) revert back to original image
   seg_map = tf.squeeze(seg_map).numpy().astype(np.int8)
   target = np.array(Image.open(image_target))
+  target = np.clip(target, 0, 21)
 
   #https://stackoverflow.com/questions/67445086/meaniou-calculation-approaches-for-semantic-segmentation-which-one-is-correct
   target = target.flatten()
