@@ -86,7 +86,7 @@ def iou_per_pixelclass(model, image_for_prediction, image_target):
   seg_map = tf.argmax(tf.image.resize(raw_prediction, image.size[::-1] ), axis=3)#(height, width) revert back to original image
   seg_map = tf.squeeze(seg_map).numpy().astype(np.int8)
   target = np.array(Image.open(image_target))
-  target = np.clip(target, 0, 21)
+  target[target == 255] = 0
 
   #https://stackoverflow.com/questions/67445086/meaniou-calculation-approaches-for-semantic-segmentation-which-one-is-correct
   target = target.flatten()
@@ -109,7 +109,13 @@ def iou_per_pixelclass(model, image_for_prediction, image_target):
   meaniou = np.nanmean(iou).astype(np.float32)  # nanmean is used to neglect 0/0 case which arise due to absence of any class
   time_milisecs= round((end-start) * 1000,4)
 
-  return meaniou, iou, time_milisecs
+
+  k = tf.keras.metrics.MeanIoU(num_classes=21)
+  k.update_state(target.flatten(), np.array(seg_map).flatten())
+  kmiou = k.result().numpy()
+
+
+  return meaniou, iou, time_milisecs, kmiou
 
 def iou_per_class(model, image_for_prediction, labels): #can change the model as needed
   '''
