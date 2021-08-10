@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import time
 import tensorflow as tf
 from PIL import Image
@@ -7,8 +6,97 @@ import matplotlib.image as mpimg
 from PIL import ImageOps
 import os
 
+def meanIou(model, image_for_prediction, image_target):
+  '''
+    call function like: utilities.iou_per_class('modelDeepLabV3_Mila.tflite', '2008_000491.jpg', '2008_000491.png')
+    What does this function do?
+    - This function will calculate the IoU
+    The image_for_prediction will be transformed to a segmentation map where the classes per pixel value will be found.This will be flattened into a 1D array
+    The image_target array will be obtained by converting the pixels of the image_target to classes
+     Arguments:
+    - param1 (.tflite): a  segmentation model
+    - param2 (.jpg): a picture from pascal
+    - param3 (.png): a picture from pascal
+    
+    Returns:
+    - time_milisecs (time in miliseconds), kmiou (float)
+  '''
+  image_name = image_for_prediction
+  interpreter = tf.lite.Interpreter(model_path=model)
+  image_name = image_for_prediction
+  # Interpreter interface for TensorFlow Lite Models.
+
+
+  # Gets model input and output details.
+  input_index = interpreter.get_input_details()[0]["index"]
+  input_details = interpreter.get_input_details()
+  output_index = interpreter.get_output_details()[0]["index"]
+  interpreter.allocate_tensors()
+  input_img = mpimg.imread(image_for_prediction)
+  image = Image.fromarray(input_img)
+
+
+  # Get image size - converting from BHWC to WH
+  input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
+
+  old_size = image.size  # old_size is in (width, height) format
+  desired_ratio = input_size[0] / input_size[1]
+  old_ratio = old_size[0] / old_size[1]
+
+  if old_ratio < desired_ratio: # '<': cropping, '>': padding
+      new_size = (old_size[0], int(old_size[0] / desired_ratio))
+  else:
+      new_size = (int(old_size[1] * desired_ratio), old_size[1])
+
+  # Cropping the original image to the desired aspect ratio
+  delta_w = new_size[0] - old_size[0]
+  delta_h = new_size[1] - old_size[1]
+  padding = (delta_w//2, delta_h//2, delta_w-(delta_w//2), delta_h-(delta_h//2))
+  cropped_image = ImageOps.expand(image, padding)
+
+  # Resize the cropped image to the desired model size
+  resized_image = cropped_image.convert('RGB').resize(input_size, Image.BILINEAR)
+
+  # Convert to a NumPy array, add a batch dimension, and normalize the image.
+  image_for_prediction = np.asarray(resized_image).astype(np.float32)
+  image_for_prediction = np.expand_dims(image_for_prediction, 0)
+  image_for_prediction = image_for_prediction / 127.5 - 1
+    
+  # Invoke the interpreter to run inference.
+
+  interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
+  interpreter.invoke()
+
+  #get values of input sizes **********
+  input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
+
+  # Sets the value of the input tensor
+  interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
+    # Invoke the interpreter.
+  interpreter.invoke()
+  # 
+  start = time.time()
+  predictions_array = interpreter.get_tensor(output_index)
+  end = time.time()
+
+  raw_prediction = predictions_array
+  ##  resize then argmax - this is used in some other frozen graph and produce smoother output
+  seg_map = tf.argmax(tf.image.resize(raw_prediction, image.size[::-1] ), axis=3)#(height, width) revert back to original image
+  seg_map = tf.squeeze(seg_map).numpy().astype(np.int8)
+  target = np.array(Image.open(image_target))
+  target[target == 255] = 0
+
+  k = tf.keras.metrics.MeanIoU(num_classes=21)
+  k.update_state(target.flatten(), np.array(seg_map).flatten())
+  kmiou = k.result().numpy()
+  time_milisecs= round((end-start) * 1000,4)
+
+  return  time_milisecs, kmiou
+
+
+
 def iou_per_pixelclass(model, image_for_prediction, image_target):
-    '''
+  '''
     call function like: utilities.iou_per_class('modelDeepLabV3_Mila.tflite', '2008_000491.jpg', '2008_000491.png')
     What does this function do?
     - This function will calculate the IoU
@@ -21,7 +109,6 @@ def iou_per_pixelclass(model, image_for_prediction, image_target):
     
     Returns:
     - iou_score (float), iou_per_class_array (float array size 1x20 an entry per class), time_milisecs (time in miliseconds)
-    
   '''
   image_name = image_for_prediction
   interpreter = tf.lite.Interpreter(model_path=model)
