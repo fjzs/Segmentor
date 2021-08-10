@@ -89,6 +89,7 @@ def meanIou(model, image_for_prediction, image_target):
   k = tf.keras.metrics.MeanIoU(num_classes=21)
   k.update_state(target.flatten(), np.array(seg_map).flatten())
   kmiou = k.result().numpy()
+  k.reset_state()
   time_milisecs= round((end-start) * 1000,4)
 
   return  time_milisecs, kmiou
@@ -200,6 +201,7 @@ def iou_per_pixelclass(model, image_for_prediction, image_target):
   k = tf.keras.metrics.MeanIoU(num_classes=21)
   k.update_state(target.flatten(), np.array(seg_map).flatten())
   kmiou = k.result().numpy()
+  k.reset_state()
 
 
   return meaniou, iou, time_milisecs, kmiou
