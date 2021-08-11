@@ -5,6 +5,7 @@ from PIL import Image
 import matplotlib.image as mpimg
 from PIL import ImageOps
 import os
+import imageio
 
 def meanIou(model, image_for_prediction, image_target):
   '''
@@ -23,7 +24,6 @@ def meanIou(model, image_for_prediction, image_target):
   '''
   image_name = image_for_prediction
   interpreter = tf.lite.Interpreter(model_path=model)
-  image_name = image_for_prediction
   # Interpreter interface for TensorFlow Lite Models.
 
 
@@ -56,6 +56,7 @@ def meanIou(model, image_for_prediction, image_target):
 
   # Resize the cropped image to the desired model size
   resized_image = cropped_image.convert('RGB').resize(input_size, Image.BILINEAR)
+  #resized_image = image.convert('RGB').resize(input_size, Image.BILINEAR)
 
   # Convert to a NumPy array, add a batch dimension, and normalize the image.
   image_for_prediction = np.asarray(resized_image).astype(np.float32)
@@ -89,7 +90,7 @@ def meanIou(model, image_for_prediction, image_target):
   k = tf.keras.metrics.MeanIoU(num_classes=21)
   k.update_state(target.flatten(), np.array(seg_map).flatten())
   kmiou = k.result().numpy()
-  k.reset_state()
+  k.reset_states()
   time_milisecs= round((end-start) * 1000,4)
 
   return  time_milisecs, kmiou
@@ -310,3 +311,36 @@ def iou_per_class(model, image_for_prediction, labels): #can change the model as
   
 
   return iou_score, iou_per_class_array, time_milisecs
+
+def image2segmap(img):
+    """Encode segmentation label images as pascal classes
+    Args:
+       - img: png label image from Pascal VOC database
+    Returns:
+       - (np.ndarray): class map with dimensions (M,N), where the value at
+        a given location is the integer denoting the class index.
+    """
+    mask = imageio.imread(img,pilmode='RGB')
+    mask = mask.astype(int)
+    label_mask = np.zeros((mask.shape[0], mask.shape[1]), dtype=np.int16)
+    for ii, label in enumerate(get_pascal_labels()):
+        label_mask[np.where(np.all(mask == label, axis=-1))[:2]] = ii
+    label_mask = label_mask.astype(int)
+    
+    # Mask border as 255 (from 21)
+    label_mask[label_mask == 21] = 255
+    
+    return label_mask
+
+def get_pascal_labels():
+    """Load the mapping that associates pascal classes with label colors
+    Returns:
+       - np.ndarray with dimensions (21, 3) this include bacground (0) and 
+         border line separating the class (255)
+    """
+    return np.asarray([[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
+                       [0, 0, 128], [128, 0, 128], [0, 128, 128], [128, 128, 128],
+                       [64, 0, 0], [192, 0, 0], [64, 128, 0], [192, 128, 0],
+                       [64, 0, 128], [192, 0, 128], [64, 128, 128], [192, 128, 128],
+                       [0, 64, 0], [128, 64, 0], [0, 192, 0], [128, 192, 0],
+                       [0, 64, 128],[224, 224, 192]])
