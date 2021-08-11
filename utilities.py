@@ -112,7 +112,7 @@ def iou_per_pixelclass(model, image_for_prediction, image_target):
     Returns:
     - iou_score (float), iou_per_class_array (float array size 1x20 an entry per class), time_milisecs (time in miliseconds)
   '''
-  image_name = image_for_prediction
+  
   interpreter = tf.lite.Interpreter(model_path=model)
   image_name = image_for_prediction
   # Interpreter interface for TensorFlow Lite Models.
