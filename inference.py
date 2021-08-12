@@ -3,30 +3,47 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import os
-from PIL import Image
+from PIL import Image, ImageOps
+from matplotlib import gridspec
+
+
+
 
 def read_image(image):
+    """
+    reads image and transfomrs it into numpy array 
+    Arguments:
+    imgage [jpg]: image file
+    Results 
+    [numpy array] of dimensions (m,n,3) for color (m,n)for gray
+    """
     return mpimg.imread(image)
     
 
 
 def format_image(image):
+    """
+    converts array to a Pillow image
+    Arguments:
+    image [np array] : dimensions (m,n,3) for color, (m,n) grayscale
+    Results
+    Pillow image object
+    """
     image = Image.fromarray(image)
     return image #tf.image.resize(image[tf.newaxis, ...], [257, 257]) / 255.0 #[224, 224]) / 255.0  #Got 224 but expected 257 for dimension 1 of input 183.
 
 
 def get_category(img, model):
     """Write a Function to Predict the Class Name
-
     Args:
         img [jpg]: image file
-
     Returns:
         [str]: Prediction
     """
-        #Prepare image further for running inference *******
+    #Prepare image further for running inference *******
     path = 'static/models/'
     tflite_model_file = model
+
     # Load TFLite model and allocate tensors.
     with open(path + tflite_model_file, 'rb') as fid:
         tflite_model = fid.read()
@@ -41,24 +58,32 @@ def get_category(img, model):
     output_index = interpreter.get_output_details()[0]["index"]
     interpreter.allocate_tensors()
 
+    #read image and make it into pillow object
     input_img = read_image(img)
     image = format_image(input_img)
-    from PIL import ImageOps
 
-    # Get image size - converting from BHWC to WH
+
+    # Get image size - Getting the (width, height) the model needs from the input image
+    # input_details[0]['shape'] BHWC to WH input_size
     input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
-
+    
+    #Pre-processing
+    #prepare downloaded image for inference : trying to respect the same ratio as input_size
     old_size = image.size  # old_size is in (width, height) format
     desired_ratio = input_size[0] / input_size[1]
     old_ratio = old_size[0] / old_size[1]
 
-    if old_ratio < desired_ratio: # '<': cropping, '>': padding
+    
+    if old_ratio < desired_ratio:
+      #if the ratio of the downloaded image is less than the one of the ideal input, then the width of the downloaded is too high
+      #change size to match desired ratio
         new_size = (old_size[0], int(old_size[0] / desired_ratio))
     else:
         new_size = (int(old_size[1] * desired_ratio), old_size[1])
-    from PIL import ImageOps
+   
 
     # Cropping the original image to the desired aspect ratio
+    # if '<': cropping, else '>': padding
     delta_w = new_size[0] - old_size[0]
     delta_h = new_size[1] - old_size[1]
     padding = (delta_w//2, delta_h//2, delta_w-(delta_w//2), delta_h-(delta_h//2))
@@ -73,39 +98,22 @@ def get_category(img, model):
     image_for_prediction = image_for_prediction / 127.5 - 1
     
 
-
-
     # Invoke the interpreter to run inference.
-
+    #set the tensors
     interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
     interpreter.invoke()
 
     #get values of input sizes **********
     input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
 
-
-
-
-    # Sets the value of the input tensor
-    interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
-    # Invoke the interpreter.
-    interpreter.invoke()
-
-    predictions_array = interpreter.get_tensor(output_index)
-    raw_prediction = predictions_array
-    # Post-processing: convert raw output to segmentation output
-    ## Method 1: argmax before resize - this is used in some frozen graph
-    # seg_map = np.squeeze(np.argmax(raw_prediction, axis=3)).astype(np.int8)
-    # seg_map = np.asarray(Image.fromarray(seg_map).resize(image.size, resample=Image.NEAREST))
-    ## Method 2: resize then argmax - this is used in some other frozen graph and produce smoother output
+    predictions_array = interpreter.get_tensor(output_index) #probabilities matrix of the prediction
+    raw_prediction = predictions_array #(1, 513, 513, 21)
     width, height = cropped_image.size
     seg_map = tf.argmax(tf.image.resize(raw_prediction, (height, width)), axis=3)
     seg_map = tf.squeeze(seg_map).numpy().astype(np.int8)
 
     
     
-    from matplotlib import gridspec
-    from matplotlib import pyplot as plt
 
     def create_pascal_label_colormap():
     #"""Creates a label colormap used in PASCAL VOC segmentation benchmark. Returns:A Colormap for visualizing segmentation results."""
