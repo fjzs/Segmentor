@@ -6,6 +6,7 @@ import matplotlib.image as mpimg
 from PIL import ImageOps
 import os
 import imageio
+import cv2
 
 def meanIou(model, image_for_prediction, image_target):
   '''
@@ -55,8 +56,8 @@ def meanIou(model, image_for_prediction, image_target):
   cropped_image = ImageOps.expand(image, padding)
 
   # Resize the cropped image to the desired model size
-  resized_image = cropped_image.convert('RGB').resize(input_size, Image.BILINEAR)
-  #resized_image = image.convert('RGB').resize(input_size, Image.BILINEAR)
+  # resized_image = cropped_image.convert('RGB').resize(input_size, Image.BILINEAR)
+  resized_image = image.convert('RGB').resize(input_size, Image.BILINEAR)
 
   # Convert to a NumPy array, add a batch dimension, and normalize the image.
   image_for_prediction = np.asarray(resized_image).astype(np.float32)
@@ -155,17 +156,18 @@ def iou_per_pixelclass(model, image_for_prediction, image_target):
     
   # Invoke the interpreter to run inference.
 
-  interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
-  interpreter.invoke()
+  #interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
+  #interpreter.invoke()
 
   #get values of input sizes **********
-  input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
+  #input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
 
   # Sets the value of the input tensor
   interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
-    # Invoke the interpreter.
+  # Invoke the interpreter.
   interpreter.invoke()
-  # 
+  
+  # calculate the time difference
   start = time.time()
   predictions_array = interpreter.get_tensor(output_index)
   end = time.time()
@@ -331,6 +333,41 @@ def image2segmap(img):
     label_mask[label_mask == 21] = 255
     
     return label_mask
+
+
+def segmap2image(label_mask, filename, plot=False):
+    """Decode segmentation class labels into a color image
+    Args:
+        -label_mask (np.ndarray): an (M,N) array of integer values denoting
+          the class label at each spatial location.
+        -filename (str): name the file to save
+        -plot (bool, optional): whether to show the resulting color image
+          in a figure.
+    Returns:
+        (np.ndarray, optional): the resulting decoded color image.
+    """
+    n_classes = 21
+    label_colours = get_pascal_labels()
+    
+    r = label_mask.copy()
+    g = label_mask.copy()
+    b = label_mask.copy()
+    
+    for ll in range(0, n_classes):
+        r[label_mask == ll] = label_colours[ll, 0]
+        g[label_mask == ll] = label_colours[ll, 1]
+        b[label_mask == ll] = label_colours[ll, 2]
+    
+    rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], 3))
+    rgb[:, :, 0] = r / 255.0
+    rgb[:, :, 1] = g / 255.0
+    rgb[:, :, 2] = b / 255.0
+    if plot:
+        cv2.imshow(rgb)
+        cv2.waitKey(0)
+        cv2.imwrite(filename, rgb)
+    else:
+        return rgb
 
 def get_pascal_labels():
     """Load the mapping that associates pascal classes with label colors
