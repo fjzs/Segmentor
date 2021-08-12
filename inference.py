@@ -37,6 +37,7 @@ def get_category(img, model):
     """Write a Function to Predict the Class Name
     Args:
         img [jpg]: image file
+        model [tflite]: file
     Returns:
         [str]: Prediction
     """
@@ -116,6 +117,7 @@ def get_category(img, model):
     
 
     def create_pascal_label_colormap():
+      
     #"""Creates a label colormap used in PASCAL VOC segmentation benchmark. Returns:A Colormap for visualizing segmentation results."""
         colormap = np.zeros((257, 3), dtype=int)#np.zeros((256, 3), dtype=int)
         ind = np.arange(257, dtype=int)# np.arange(256, dtype=int)
@@ -153,7 +155,16 @@ def get_category(img, model):
         return colormap[label]
 
     def vis_segmentation(image, seg_map, model):
-  #"""Visualizes input image, segmentation map and overlay view."""
+      """
+      Visualizes input image, segmentation map and overlay view
+      Arguments:
+      image [Pil image] : (m,n)
+      seg_map [np_array] (m,n)
+      model [tflite]: file
+      Results
+      An image[png] saved on path 'static/images/'
+      """
+
         plt.figure(figsize=(15, 5))
         grid_spec = gridspec.GridSpec(1, 4, width_ratios=[6, 6, 6, 1])
 
@@ -212,10 +223,12 @@ def get_category(img, model):
     #predictions_array.shape #class_names[predicted_label] 
 
 def save_image(img, img_name):
-    """Plot the input image
+    """Saves input image
     Args:
         img [jpg]: image file
         img_name[string]: name for the file
+    Results:
+        [png] saves image to /static/images/
     """
     read_img = mpimg.imread(img)
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
