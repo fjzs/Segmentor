@@ -40,23 +40,7 @@ def meanIou(model, image_for_prediction, image_target):
   # Get image size - converting from BHWC to WH
   input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
 
-  old_size = image.size  # old_size is in (width, height) format
-  desired_ratio = input_size[0] / input_size[1]
-  old_ratio = old_size[0] / old_size[1]
-
-  if old_ratio < desired_ratio: # '<': cropping, '>': padding
-      new_size = (old_size[0], int(old_size[0] / desired_ratio))
-  else:
-      new_size = (int(old_size[1] * desired_ratio), old_size[1])
-
-  # Cropping the original image to the desired aspect ratio
-  delta_w = new_size[0] - old_size[0]
-  delta_h = new_size[1] - old_size[1]
-  padding = (delta_w//2, delta_h//2, delta_w-(delta_w//2), delta_h-(delta_h//2))
-  cropped_image = ImageOps.expand(image, padding)
-
-  # Resize the cropped image to the desired model size
-  # resized_image = cropped_image.convert('RGB').resize(input_size, Image.BILINEAR)
+  # Resize the image to the desired model size
   resized_image = image.convert('RGB').resize(input_size, Image.BILINEAR)
 
   # Convert to a NumPy array, add a batch dimension, and normalize the image.
@@ -131,23 +115,9 @@ def iou_per_pixelclass(model, image_for_prediction, image_target):
   # Get image size - converting from BHWC to WH
   input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
 
-  old_size = image.size  # old_size is in (width, height) format
-  desired_ratio = input_size[0] / input_size[1]
-  old_ratio = old_size[0] / old_size[1]
-
-  if old_ratio < desired_ratio: # '<': cropping, '>': padding
-      new_size = (old_size[0], int(old_size[0] / desired_ratio))
-  else:
-      new_size = (int(old_size[1] * desired_ratio), old_size[1])
-
-  # Cropping the original image to the desired aspect ratio
-  delta_w = new_size[0] - old_size[0]
-  delta_h = new_size[1] - old_size[1]
-  padding = (delta_w//2, delta_h//2, delta_w-(delta_w//2), delta_h-(delta_h//2))
-  cropped_image = ImageOps.expand(image, padding)
 
   # Resize the cropped image to the desired model size
-  resized_image = cropped_image.convert('RGB').resize(input_size, Image.BILINEAR)
+  resized_image = image.convert('RGB').resize(input_size, Image.BILINEAR)
 
   # Convert to a NumPy array, add a batch dimension, and normalize the image.
   image_for_prediction = np.asarray(resized_image).astype(np.float32)
@@ -246,23 +216,9 @@ def iou_per_class(model, image_for_prediction, labels): #can change the model as
   # Get image size - converting from BHWC to WH
   input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
 
-  old_size = image.size  # old_size is in (width, height) format
-  desired_ratio = input_size[0] / input_size[1]
-  old_ratio = old_size[0] / old_size[1]
-
-  if old_ratio < desired_ratio: # '<': cropping, '>': padding
-      new_size = (old_size[0], int(old_size[0] / desired_ratio))
-  else:
-      new_size = (int(old_size[1] * desired_ratio), old_size[1])
- 
-  # Cropping the original image to the desired aspect ratio
-  delta_w = new_size[0] - old_size[0]
-  delta_h = new_size[1] - old_size[1]
-  padding = (delta_w//2, delta_h//2, delta_w-(delta_w//2), delta_h-(delta_h//2))
-  cropped_image = ImageOps.expand(image, padding)
 
   # Resize the cropped image to the desired model size
-  resized_image = cropped_image.convert('RGB').resize(input_size, Image.BILINEAR)
+  resized_image = image.convert('RGB').resize(input_size, Image.BILINEAR)
 
   # Convert to a NumPy array, add a batch dimension, and normalize the image.
   image_for_prediction = np.asarray(resized_image).astype(np.float32)
