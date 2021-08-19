@@ -28,7 +28,8 @@ mdl_path = './models/TensorFlowHub/'
 csv_in   = 'pascal_segmented_classes_per_image.csv'
 
 mdls = os.listdir(mdl_path)
-mdl = 'lite-model_deeplabv3-mobilenetv2_dm05_1_default_2.tflite'
+mdl = 'lite-model_deeplabv3-mobilenetv2_dm05-int8_1_default_2.tflite'
+#mdl = 'lite-model_deeplabv3-mobilenetv2-int8_1_default_1.tflite'
 
 labels = pd.read_csv(tst_path + csv_in, index_col=1).drop('Unnamed: 0', axis = 1)
 label_array = labels.to_numpy()
@@ -52,6 +53,8 @@ for img in image_list:
       time_milisecs, iou_score = meanIou(mdl_path + os.path.splitext(mdl)[0] + '.tflite', val_path + img, seg_path + os.path.splitext(img)[0] + '.png')
       iou_out.append(np.hstack((iou_score, time_milisecs)))
       i=i+1
+      if i == 100:
+          break
 iou_out = np.array(iou_out)
 
 # Create header for CSV
