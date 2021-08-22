@@ -69,7 +69,7 @@ def meanIougraph(model, image_for_prediction, image_target):
     - param3 (.png): a picture from pascal
     
     Returns:
-    - time_milisecs (time in miliseconds), kmiou (float)
+    - meaniou (float computed mean iou), kmiou (float , keras miou), iou (array of floats mean iou per class),time_milisecs (time in miliseconds),
   '''
   MODEL = DeepLabModel(model)
   image, seg_map, time = MODEL.run(image_for_prediction)
@@ -128,8 +128,8 @@ def iou_per_pixelclass1(model, image_for_prediction, image_target):
     - param3 (.png): a picture from pascal
     
     Returns:
-    - iou_score (float), iou_per_class_array (float array size 1x20 an entry per class),kmiou (keras miou float), time_milisecs (time in miliseconds)
-    
+
+     - meaniou (float computed mean iou), kmiou (float , keras miou), iou (float array size 1x20 an miou entry per class),time_milisecs (time in miliseconds),
   '''
   image_name = image_for_prediction
   interpreter = tf.lite.Interpreter(model_path=model)
@@ -219,7 +219,7 @@ def iou_per_pixelclass1(model, image_for_prediction, image_target):
   k.reset_state()
   time_milisecs= round((end-start) * 1000,4)
 
-  return meaniou, iou ,kmiou,time_milisecs
+  return meaniou,kmiou, iou ,time_milisecs
 
 def meanIou(model, image_for_prediction, image_target):
   '''
