@@ -113,7 +113,7 @@ def meanIougraph(model, image_for_prediction, image_target):
   k.reset_state()
 
 
-  return  meaniou, kmiou, time
+  return  meaniou, kmiou, iou, time
 
 def iou_per_pixelclass1(model, image_for_prediction, image_target):
   '''
@@ -128,7 +128,7 @@ def iou_per_pixelclass1(model, image_for_prediction, image_target):
     - param3 (.png): a picture from pascal
     
     Returns:
-    - iou_score (float), iou_per_class_array (float array size 1x20 an entry per class), time_milisecs (time in miliseconds)
+    - iou_score (float), iou_per_class_array (float array size 1x20 an entry per class),kmiou (keras miou float), time_milisecs (time in miliseconds)
     
   '''
   image_name = image_for_prediction
@@ -217,8 +217,10 @@ def iou_per_pixelclass1(model, image_for_prediction, image_target):
   k.update_state(target.flatten(), np.array(seg_map).flatten())
   kmiou = k.result().numpy()
   k.reset_state()
+  time_milisecs= round((end-start) * 1000,4)
 
-  return meaniou, iou ,kmiou
+  return meaniou, iou ,kmiou,time_milisecs
+
 def meanIou(model, image_for_prediction, image_target):
   '''
     call function like: utilities.iou_per_class('modelDeepLabV3_Mila.tflite', '2008_000491.jpg', '2008_000491.png')
