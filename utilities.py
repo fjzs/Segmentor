@@ -8,7 +8,7 @@ import os
 import imageio
 import cv2
 
-
+#This class is to open graph type files .pb
 class DeepLabModel(object):
   """Class to load deeplab model and run inference."""
   INPUT_TENSOR_NAME = 'ImageTensor:0'
@@ -56,7 +56,7 @@ class DeepLabModel(object):
         time_milisecs= round((end-start) * 1000,4)
         return image, seg_map, time_milisecs
 
-def meanIougraph(model, image_for_prediction, image_target):
+def meanIougraph(model, image_for_prediction, image_target): #this function is to be used for .pb models
   '''
     call function like: meanIou3graph('deeplabv3_mnv2_pascal_train_aug/saved_model.pb','2007_000063.jpg', "2007_000063.png")
     What does this function do?
@@ -115,7 +115,7 @@ def meanIougraph(model, image_for_prediction, image_target):
 
   return  meaniou, kmiou, iou, time
 
-def iou_per_pixelclass1(model, image_for_prediction, image_target):
+def iou_per_pixelclass1(model, image_for_prediction, image_target): #this function is to be used for tflite
   '''
     call function like: utilities.iou_per_class('modelDeepLabV3_Mila.tflite', '2008_000491.jpg', '2008_000491.png')
     What does this function do?
