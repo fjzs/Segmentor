@@ -7,6 +7,7 @@ from PIL import ImageOps
 import os
 import imageio
 import cv2
+import cProfile, pstats
 
 #This class is to open graph type files .pb
 class DeepLabModel(object):
@@ -131,6 +132,9 @@ def iou_per_pixelclass1(model, image_for_prediction, image_target): #this functi
 
      - meaniou (float computed mean iou), kmiou (float , keras miou), iou (float array size 1x20 an miou entry per class),time_milisecs (time in miliseconds),
   '''
+  
+  # profiler = cProfile.Profile()
+  # profiler.enable()
   image_name = image_for_prediction
   interpreter = tf.lite.Interpreter(model_path=model)
   image_name = image_for_prediction
@@ -157,21 +161,23 @@ def iou_per_pixelclass1(model, image_for_prediction, image_target): #this functi
   image_for_prediction = image_for_prediction / 127.5 - 1
     
   # Invoke the interpreter to run inference.
-
-  interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
-  interpreter.invoke()
+  # interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
+  # interpreter.invoke()
 
   #get values of input sizes **********
   input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
-
+  
+  # Calculate latency
+  start = time.time()
   # Sets the value of the input tensor
   interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
     # Invoke the interpreter.
   interpreter.invoke()
-  # 
-  start = time.time()
   predictions_array = interpreter.get_tensor(output_index)
   end = time.time()
+  # profiler.disable()
+  # stats = pstats.Stats(profiler).sort_stats('tottime')
+  # stats.print_stats()   
 
   raw_prediction = predictions_array
   ##  resize then argmax - this is used in some other frozen graph and produce smoother output
@@ -216,7 +222,7 @@ def iou_per_pixelclass1(model, image_for_prediction, image_target): #this functi
   k = tf.keras.metrics.MeanIoU(num_classes=21)
   k.update_state(target.flatten(), np.array(seg_map).flatten())
   kmiou = k.result().numpy()
-  k.reset_state()
+  #k.reset_state()
   time_milisecs= round((end-start) * 1000,4)
 
   return meaniou,kmiou, iou ,time_milisecs
@@ -544,9 +550,16 @@ def get_pascal_labels():
        - np.ndarray with dimensions (21, 3) this include bacground (0) and 
          border line separating the class (255)
     """
-    return np.asarray([[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
+    label = np.asarray([[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
                        [0, 0, 128], [128, 0, 128], [0, 128, 128], [128, 128, 128],
                        [64, 0, 0], [192, 0, 0], [64, 128, 0], [192, 128, 0],
                        [64, 0, 128], [192, 0, 128], [64, 128, 128], [192, 128, 128],
                        [0, 64, 0], [128, 64, 0], [0, 192, 0], [128, 192, 0],
                        [0, 64, 128],[224, 224, 192]])
+    
+    label_names = np.asarray([
+        'background', 'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus',
+        'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
+        'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tv','border'
+    ])
+    return label, label_names
