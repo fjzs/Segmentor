@@ -75,27 +75,20 @@ def meanIougraph(model, image_for_prediction, image_target): #this function is t
   MODEL = DeepLabModel(model)
   image, seg_map, time = MODEL.run(image_for_prediction)
 
-  # seg_map = tf.squeeze(seg_map).numpy().astype(np.int8)
-  target = np.array(Image.open(image_target))
-
-  target = target.ravel()
-  # target = np.clip(target, 0, 21)
-  target[target == 255] = 0
-  
   predicted = np.array(seg_map).ravel()
+  target = np.array(Image.open(image_target)).ravel()
+
+  #Filter the valid classes
+  
   num_classes=21
-  # Trick for bincounting 2 arrays together
-  x = predicted + num_classes * target
-  bincount_2d = np.bincount(x.astype(np.int32), minlength=num_classes**2)
-  # assert bincount_2d.size == num_classes**2
-  conf = bincount_2d.reshape((num_classes, num_classes))
-  x = predicted 
-  pred_count_2d = np.bincount(x.astype(np.int32), minlength=21)
-  y = target
-  targ_count_2d = np.bincount(y.astype(np.int32), minlength=21)
-  temp = target * 21 + predicted
-  cm = np.bincount(temp, weights = None, minlength = 441)
-  cm = cm.reshape((21, 21))
+  
+  valid_mask = (target <= num_classes)
+  target = target[valid_mask]
+  predicted =  predicted[valid_mask]
+  
+  #Obtain confusion matrix
+  conf = tf.cast(tf.math.confusion_matrix(target, predicted, num_classes=num_classes), 'float32')
+  
   # Compute the IoU and mean IoU from the confusion matrix
   true_positive = np.diag(conf)
   false_positive = np.sum(conf, 0) - true_positive
@@ -103,9 +96,11 @@ def meanIougraph(model, image_for_prediction, image_target): #this function is t
 
   denominator = (true_positive + false_positive + false_negative)
   num_valid_entries = np.count_nonzero(denominator)
-  iou = true_positive/denominator
-  iou = np.nan_to_num(iou)
-  meaniou = np.sum(iou, 0).astype(np.float32)/num_valid_entries
+  
+  out = np.zeros( len( denominator))  #preinit
+  iou = np.divide(true_positive, denominator, out=out, where=denominator!=0)
+
+  meaniou = np.sum(iou).astype(np.float32)/num_valid_entries
 
   # keras
   k = tf.keras.metrics.MeanIoU(num_classes=21)
@@ -114,7 +109,7 @@ def meanIougraph(model, image_for_prediction, image_target): #this function is t
   k.reset_state()
 
 
-  return  meaniou, kmiou, iou, time
+  return  round(meaniou, 8), kmiou, iou, time
 
 def iou_per_pixelclass1(model, image_for_prediction, image_target): #this function is to be used for tflite
   '''
@@ -210,7 +205,7 @@ def iou_per_pixelclass1(model, image_for_prediction, image_target): #this functi
   #k.reset_state()
   time_milisecs= round((end-start) * 1000,4)
 
-  return meaniou,kmiou, iou ,time_milisecs
+  return round(meaniou, 8),kmiou, iou ,time_milisecs
 
 #OLDER VERSIONS:
 
