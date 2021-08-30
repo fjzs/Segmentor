@@ -56,6 +56,49 @@ class DeepLabModel(object):
         seg_map = batch_seg_map[0]
         time_milisecs= round((end-start) * 1000,4)
         return image, seg_map, time_milisecs
+      
+def meanIocustom(model, image_for_prediction, image_target):
+  '''
+    call function like: meanIoucutsom('deeplabv3_mnv2_pascal_train_aug/saved_model.pb','2007_000063.jpg', "2007_000063.png")
+    What does this function do?
+    - This function will calculate the IoU per class and mIou for custom model
+    The image_for_prediction will be transformed to a segmentation map where the classes per pixel value will be found.This will be flattened into a 1D array
+    The image_target array will be obtained by converting the pixels of the image_target to classes
+     Arguments:
+    - param1 (.pb): a  segmentation model
+    - param2 (.jpg): a picture from pascal
+    - param3 (.png): a picture from pascal
+    
+    Returns:
+    - miou (float), iou (array of floats)
+  '''
+  MODEL = DeepLabModel(model)
+  image, seg_map, time = MODEL.run(image_for_prediction)
+  
+  predicted = np.array(seg_map).ravel()
+  num_classes=21
+  
+  target = np.array(Image.open(image_target)).ravel()
+
+  valid_mask = (target <= num_classes)
+  target = target[valid_mask]
+  predicted =  predicted[valid_mask]
+  conf_matrix = tf.cast(tf.math.confusion_matrix(target, predicted, num_classes=num_classes), 'float32')
+  true_pos = tf.linalg.diag_part(conf_matrix) 
+
+
+  # Compute the IoU and mean IoU from the confusion matrix
+  true_positive = np.diag(conf_matrix)
+  false_positive = np.sum(conf_matrix, 0) - true_positive
+  false_negative = np.sum(conf_matrix, 1) - true_positive
+  denominator = true_positive + false_positive + false_negative
+  num_valid_entries = np.count_nonzero(denominator)
+  out = np.zeros( len( denominator))  #preinit
+  iou = np.divide(true_positive, denominator, out=out, where=denominator!=0)
+  meaniou = np.sum(iou).astype(np.float32)/num_valid_entries #there will always be at least one entry (background)
+
+
+  return round(meaniou, 8),iou
 
 def meanIougraph(model, image_for_prediction, image_target): #this function is to be used for .pb models
   '''
