@@ -160,18 +160,12 @@ def iou_per_pixelclass1(model, image_for_prediction, image_target): #this functi
   image_for_prediction = np.expand_dims(image_for_prediction, 0)
   image_for_prediction = image_for_prediction / 127.5 - 1
     
-  # Invoke the interpreter to run inference.
-  # interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
-  # interpreter.invoke()
-
-  #get values of input sizes **********
-  input_size = input_details[0]['shape'][2], input_details[0]['shape'][1]
   
   # Calculate latency
   start = time.time()
   # Sets the value of the input tensor
   interpreter.set_tensor(input_details[0]['index'], image_for_prediction)
-    # Invoke the interpreter.
+  # Invoke the interpreter.
   interpreter.invoke()
   predictions_array = interpreter.get_tensor(output_index)
   end = time.time()
@@ -179,31 +173,23 @@ def iou_per_pixelclass1(model, image_for_prediction, image_target): #this functi
   # stats = pstats.Stats(profiler).sort_stats('tottime')
   # stats.print_stats()   
 
-  raw_prediction = predictions_array
-  ##  resize then argmax - this is used in some other frozen graph and produce smoother output
-  seg_map = tf.argmax(tf.image.resize(raw_prediction, image.size[::-1] ), axis=3)#(height, width) revert back to original image
-  seg_map = tf.squeeze(seg_map).numpy().astype(np.int8)
-  target = np.array(Image.open(image_target)) #transform image to labels, removes colormap
- 
-  #https://stackoverflow.com/questions/67445086/meaniou-calculation-approaches-for-semantic-segmentation-which-one-is-correct
-  target = target.ravel()
-  # target = np.clip(target, 0, 21)
-  target[target == 255] = 0
-  
+
+  #obtain the predicted array
+  seg_map = np.argmax(tf.image.resize(predictions_array, image.size[::-1] ), axis=3)#(height, width) revert back to original image
   predicted = np.array(seg_map).ravel()
+  
+  #obtain the true array, we will call target
+  target = np.array(Image.open(image_target)).ravel() #transform image to labels, removes colormap
+ 
+  # exclude the deliniation pixels of class 255
   num_classes=21
-  # Trick for bincounting 2 arrays together
-  x = predicted + num_classes * target
-  bincount_2d = np.bincount(x.astype(np.int32), minlength=num_classes**2)
-  # assert bincount_2d.size == num_classes**2
-  conf = bincount_2d.reshape((num_classes, num_classes))
-  x = predicted 
-  pred_count_2d = np.bincount(x.astype(np.int32), minlength=21)
-  y = target
-  targ_count_2d = np.bincount(y.astype(np.int32), minlength=21)
-  temp = target * 21 + predicted
-  cm = np.bincount(temp, weights = None, minlength = 441)
-  cm = cm.reshape((21, 21))
+  valid_mask = (target <= num_classes) 
+  target = target[valid_mask]
+  predicted =  predicted[valid_mask]
+  
+  #create the confucion matrix
+  conf = tf.cast(tf.math.confusion_matrix(target, predicted, num_classes=num_classes), 'float32')
+  
   # Compute the IoU and mean IoU from the confusion matrix
   true_positive = np.diag(conf)
   false_positive = np.sum(conf, 0) - true_positive
@@ -211,21 +197,22 @@ def iou_per_pixelclass1(model, image_for_prediction, image_target): #this functi
 
   denominator = (true_positive + false_positive + false_negative)
   num_valid_entries = np.count_nonzero(denominator)
-  iou = true_positive/denominator
-  # iou[np.isnan(iou)] = 1
-  #iou= np.mean(iou)
-  iou = np.nan_to_num(iou)
+  out = np.zeros( len( denominator))  #preinit
+  iou = np.divide(true_positive, denominator, out=out, where=denominator!=0)
+
   meaniou = np.sum(iou, 0).astype(np.float32)/num_valid_entries
-  # meaniou = np.nanmean(iou).astype(np.float32)
+
 
   # keras
-  k = tf.keras.metrics.MeanIoU(num_classes=21)
-  k.update_state(target.flatten(), np.array(seg_map).flatten())
+  k = tf.keras.metrics.MeanIoU(num_classes=num_classes)
+  k.update_state(target, predicted)
   kmiou = k.result().numpy()
   #k.reset_state()
   time_milisecs= round((end-start) * 1000,4)
 
   return meaniou,kmiou, iou ,time_milisecs
+
+#OLDER VERSIONS:
 
 def meanIou(model, image_for_prediction, image_target):
   '''
