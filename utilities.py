@@ -14,7 +14,7 @@ class DeepLabModel(object):
   """Class to load deeplab model and run inference."""
   INPUT_TENSOR_NAME = 'ImageTensor:0'
   OUTPUT_TENSOR_NAME = 'SemanticPredictions:0'
-  INPUT_SIZE = 513
+  INPUT_SIZE = (500, 375)
   FROZEN_GRAPH_NAME = 'frozen_inference_graph.pb'
 
   def __init__(self,model):
@@ -51,12 +51,105 @@ class DeepLabModel(object):
         start = time.time()
         batch_seg_map = self.sess.run(
             self.OUTPUT_TENSOR_NAME,
-            feed_dict={self.INPUT_TENSOR_NAME: [np.asarray(image)]})#/127.5 -1]})
+            feed_dict={self.INPUT_TENSOR_NAME: [np.asarray(image)]})
         end = time.time()
-        seg_map = batch_seg_map[0]
+        seg_map = batch_seg_map[0] # expected batch size = 1
         time_milisecs= round((end-start) * 1000,4)
         return image, seg_map, time_milisecs
-      
+  def run_norm(self, image):
+        """Runs inference on a single image.
+
+        Args:
+        image: A PIL.Image object, raw input image.
+
+        Returns:
+        resized_image: RGB image resized from original input image.
+        seg_map: Segmentation map of `resized_image`.
+        time_milisecs: Time it takes to run inference on an image
+        """
+       
+        image = mpimg.imread(image)
+        image = Image.fromarray(image)
+        
+        start = time.time()
+        batch_seg_map = self.sess.run(
+            self.OUTPUT_TENSOR_NAME,
+            feed_dict={self.INPUT_TENSOR_NAME: [np.asarray(image)/np.max(np.asarray(image))]})
+        end = time.time()
+        seg_map = batch_seg_map[0] # expected batch size = 1
+        time_milisecs= round((end-start) * 1000,4)
+        return image, seg_map, time_milisecs
+
+  def meanIougraph_norm(model, image_for_prediction, image_target):
+  '''
+    call function like: meanIou3graph('deeplabv3_mnv2_pascal_train_aug/saved_model.pb','2007_000063.jpg', "2007_000063.png")
+    What does this function do?
+    - This function will calculate the IoU per class, mIou, and the same but with normalized input images
+    The image_for_prediction will be transformed to a segmentation map where the classes per pixel value will be found.This will be flattened into a 1D array
+    The image_target array will be obtained by converting the pixels of the image_target to classes
+     Arguments:
+    - param1 (.pb): a  segmentation model
+    - param2 (.jpg): a picture from pascal
+    - param3 (.png): a picture from pascal
+    
+    Returns:
+    - time_milisecs (time in miliseconds), kmiou (float)
+  '''
+  MODEL = DeepLabModel(model)
+  image, seg_map, time = MODEL.run(image_for_prediction)
+  image_n, seg_map_n, time_n = MODEL.run_norm(image_for_prediction)
+
+
+  predicted = np.array(seg_map).ravel() #375 x 500 , original pascal voc 212 size
+  predicted_n = np.array(seg_map_n).ravel()
+  num_classes=21
+  
+  target = np.array(Image.open(image_target)).ravel() # 375 x 500
+  target_n = (np.array(Image.open(image_target))).ravel() # 375 x 500
+
+  valid_mask = (target <= num_classes)
+  target = target[valid_mask]
+  target_n = target_n[valid_mask]
+  predicted =  predicted[valid_mask]
+  predicted_n =  predicted_n[valid_mask]
+
+  conf_matrix = tf.cast(tf.math.confusion_matrix(target, predicted, num_classes=num_classes), 'float32')
+  conf_matrix_n = tf.cast(tf.math.confusion_matrix(target_n, predicted_n, num_classes=num_classes), 'float32')
+
+
+  # Compute the IoU and mean IoU from the confusion matrix
+  true_positive = np.diag(conf_matrix)
+  true_positive_n = np.diag(conf_matrix_n)
+
+  false_positive = np.sum(conf_matrix, 0) - true_positive
+  false_positive_n = np.sum(conf_matrix_n, 0) - true_positive_n
+
+  false_negative = np.sum(conf_matrix, 1) - true_positive
+  false_negative_n = np.sum(conf_matrix_n, 1) - true_positive_n
+
+  denominator = true_positive + false_positive + false_negative
+  denominator_n = true_positive_n + false_positive_n + false_negative_n
+
+  num_valid_entries = np.count_nonzero(denominator)
+  num_valid_entries_n = np.count_nonzero(denominator_n)
+
+  out = np.zeros( len( denominator))  #preinit
+  out_n = np.zeros( len( denominator_n))  #preinit
+
+  iou = np.divide(true_positive, denominator, out=out, where=denominator!=0)
+  iou_n = np.divide(true_positive_n, denominator_n, out=out_n, where=denominator_n!=0)
+
+  meaniou = np.sum(iou).astype(np.float32)/num_valid_entries #there will always be at least one entry (background)
+  meaniou_n = np.sum(iou_n).astype(np.float32)/num_valid_entries_n #there will always be at least one entry (background)
+
+
+  # keras
+  k = tf.keras.metrics.MeanIoU(num_classes=21)
+  k.update_state(target, predicted) 
+  kmiou = k.result().numpy()
+  k.reset_state()
+
+  return round(meaniou, 8),round(meaniou_n, 8), iou,iou_n, time    
 
 def meanIougraph(model, image_for_prediction, image_target): #this function is to be used for .pb models
   '''
@@ -75,8 +168,9 @@ def meanIougraph(model, image_for_prediction, image_target): #this function is t
   '''
   MODEL = DeepLabModel(model)
   image, seg_map, time = MODEL.run(image_for_prediction)
-
+  #predicted is 375x500 before raveling
   predicted = np.array(seg_map).ravel()
+  #target is 375x500 before raveling
   target = np.array(Image.open(image_target)).ravel()
 
   #Filter the valid classes
@@ -111,6 +205,8 @@ def meanIougraph(model, image_for_prediction, image_target): #this function is t
 
 
   return  round(meaniou, 8), kmiou, iou, time
+
+
 
 def iou_per_pixelclass1(model, image_for_prediction, image_target): #this function is to be used for tflite
   '''
