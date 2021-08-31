@@ -141,7 +141,9 @@ class DeepLabModel(object):
 
   meaniou = np.sum(iou).astype(np.float32)/num_valid_entries #there will always be at least one entry (background)
   meaniou_n = np.sum(iou_n).astype(np.float32)/num_valid_entries_n #there will always be at least one entry (background)
-
+  
+  iou[denominator ==0 ]=np.nan
+  iou_n[denominator_n ==0 ]=np.nan
 
   # keras
   k = tf.keras.metrics.MeanIoU(num_classes=21)
