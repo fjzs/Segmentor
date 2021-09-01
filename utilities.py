@@ -130,10 +130,10 @@ def meanIougraph_2(model, image_for_prediction, image_target):
   iou[denominator ==0 ]=np.nan
 
   # keras
-  k = tf.keras.metrics.MeanIoU(num_classes=21)
-  k.update_state(target, predicted) 
-  kmiou = k.result().numpy()
-  k.reset_state()
+#   k = tf.keras.metrics.MeanIoU(num_classes=21)
+#   k.update_state(target, predicted) 
+#   kmiou = k.result().numpy()
+#   k.reset_state()
 
   return round(meaniou, 8), iou, time
 
