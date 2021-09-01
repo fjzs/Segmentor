@@ -80,7 +80,7 @@ class DeepLabModel(object):
         time_milisecs= round((end-start) * 1000,4)
         return image, seg_map, time_milisecs
 
-  def meanIougraph_norm(model, image_for_prediction, image_target):
+def meanIougraph_norm(model, image_for_prediction, image_target):
   '''
     call function like: meanIou3graph('deeplabv3_mnv2_pascal_train_aug/saved_model.pb','2007_000063.jpg', "2007_000063.png")
     What does this function do?
@@ -149,7 +149,7 @@ class DeepLabModel(object):
   k = tf.keras.metrics.MeanIoU(num_classes=21)
   k.update_state(target, predicted) 
   kmiou = k.result().numpy()
-  k.reset_state()
+  #k.reset_state()
 
   return round(meaniou, 8),round(meaniou_n, 8), iou,iou_n, time    
 
@@ -203,7 +203,7 @@ def meanIougraph(model, image_for_prediction, image_target): #this function is t
   k = tf.keras.metrics.MeanIoU(num_classes=21)
   k.update_state(target.flatten(), np.array(seg_map).flatten())
   kmiou = k.result().numpy()
-  k.reset_state()
+  #k.reset_state()
 
 
   return  round(meaniou, 8), kmiou, iou, time
