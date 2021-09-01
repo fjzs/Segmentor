@@ -79,6 +79,63 @@ class DeepLabModel(object):
         seg_map = batch_seg_map[0] # expected batch size = 1
         time_milisecs= round((end-start) * 1000,4)
         return image, seg_map, time_milisecs
+      
+def meanIougraph_2(model, image_for_prediction, image_target):
+  '''
+    call function like: meanIou3graph('deeplabv3_mnv2_pascal_train_aug/saved_model.pb','2007_000063.jpg', "2007_000063.png")
+    What does this function do?
+    - This function will calculate the IoU per class
+    The image_for_prediction will be transformed to a segmentation map where the classes per pixel value will be found.This will be flattened into a 1D array
+    The image_target array will be obtained by converting the pixels of the image_target to classes
+     Arguments:
+    - param1 (.pb): a  segmentation model
+    - param2 (.jpg): a picture from pascal
+    - param3 (.png): a picture from pascal
+    
+    Returns:
+    - time_milisecs (time in miliseconds), kmiou (float)
+  '''
+  MODEL = DeepLabModel(model)
+  image, seg_map, time = MODEL.run(image_for_prediction)
+
+  predicted = np.array(seg_map).ravel() #375 x 500 , original pascal voc 212 size
+  num_classes=21
+  
+  target = np.array(Image.open(image_target)).ravel() # 375 x 500
+
+
+  valid_mask = (target <= num_classes)
+  target = target[valid_mask]
+  predicted =  predicted[valid_mask]
+
+
+  conf_matrix = tf.cast(tf.math.confusion_matrix(target, predicted, num_classes=num_classes), 'float32')
+  
+
+
+  # Compute the IoU and mean IoU from the confusion matrix
+  true_positive = np.diag(conf_matrix)
+  false_positive = np.sum(conf_matrix, 0) - true_positive
+  false_negative = np.sum(conf_matrix, 1) - true_positive
+
+  denominator = true_positive + false_positive + false_negative
+
+  # print(f' the classes that appear in the calculations are: {denominator.nonzero()}')
+
+  num_valid_entries = np.count_nonzero(denominator)
+  out = np.zeros( len( denominator))  #preinit
+  iou = np.divide(true_positive, denominator, out=out, where=denominator!=0)
+  meaniou = np.sum(iou).astype(np.float32)/num_valid_entries #there will always be at least one entry (background)
+
+  iou[denominator ==0 ]=np.nan
+
+  # keras
+  k = tf.keras.metrics.MeanIoU(num_classes=21)
+  k.update_state(target, predicted) 
+  kmiou = k.result().numpy()
+  k.reset_state()
+
+  return round(meaniou, 8), iou, time
 
 def meanIougraph_norm(model, image_for_prediction, image_target):
   '''
