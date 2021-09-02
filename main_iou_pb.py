@@ -51,7 +51,7 @@ for mdl in mdls:
         label = image2segmap(seg_path + os.path.splitext(img)[0] + '.png')
         #time_milisecs, iou_score = meanIou(mdl_path + os.path.splitext(mdl)[0] + '.tflite', val_path + img, seg_path + os.path.splitext(img)[0] + '.png')
         #_, iou_score, ioupclass ,time_milisecs = iou_per_pixelclass1(mdl_path + os.path.splitext(mdl)[0] + '.tflite', val_path + img, seg_path + os.path.splitext(img)[0] + '.png')
-        _, iou_score, ioupclass ,time_milisecs = meanIougraph(mdl_path + os.path.splitext(mdl)[0] + '.pb', val_path + img, seg_path + os.path.splitext(img)[0] + '.png')
+        iou_score, ioupclass ,time_milisecs = meanIougraph_2(mdl_path + os.path.splitext(mdl)[0] + '.pb', val_path + img, seg_path + os.path.splitext(img)[0] + '.png')
         iou_out.append(np.hstack((iou_score, time_milisecs, ioupclass)))
         i=i+1
   iou_out = np.array(iou_out)
