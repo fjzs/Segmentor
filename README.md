@@ -1,5 +1,5 @@
 # Segmentor
-This is an implementation of DeepLab v3 (Chen et al., 2017 https://arxiv.org/abs/1706.05587) on TensorFlow 2.0 on the Pascal VOC 2012 dataset (http://host.robots.ox.ac.uk/pascal/VOC/voc2012/)
+This is an implementation of DeepLab v3 (Chen et al., 2017 https://arxiv.org/abs/1706.05587) on TensorFlow 2.0 for the semantic segmentation problem on the Pascal VOC 2012 dataset (http://host.robots.ox.ac.uk/pascal/VOC/voc2012/)
 
 # Who are we?
 - Adi Nugraha (https://github.com/adinrh)
