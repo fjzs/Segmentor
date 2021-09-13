@@ -17,5 +17,6 @@ This is an implementation of DeepLab v3 (Chen et al., 2017 https://arxiv.org/abs
 
 
 # Licence
+MIT (https://github.com/fjzs/Segmentor/blob/main/LICENSE)
 
 
