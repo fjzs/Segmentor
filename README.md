@@ -1,8 +1,8 @@
 # Segmentor
 - This is an implementation of DeepLab v3 (Chen et al., 2017 https://arxiv.org/abs/1706.05587) on TensorFlow 2.0 for the semantic segmentation problem on the Pascal VOC 2012 dataset (http://host.robots.ox.ac.uk/pascal/VOC/voc2012/).
 - It achieved a 73% mIoU on the "val" set of Pascal VOC dataset
-- A sample of the predictions is shown below
-
+- A sample of the predictions is shown below:
+![alt text](https://github.com/fjzs/Segmentor/blob/main/Segmentor%20samples.jpg)
 
 # Who are we?
 - Adi Nugraha (https://github.com/adinrh)
@@ -21,5 +21,3 @@
 
 # Licence
 MIT (https://github.com/fjzs/Segmentor/blob/main/LICENSE)
-
-
