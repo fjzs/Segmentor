@@ -17,7 +17,8 @@
 - Analyze ethical considerations in the dataset
 
 # How to install the project
-
+- For deploying the model on AWS you would need an AWS account, nonetheless, it's pretty easy to train the model on a single noteboook and make predictions
+- The specific instructions are detailed on 
 
 # Licence
 MIT (https://github.com/fjzs/Segmentor/blob/main/LICENSE)
