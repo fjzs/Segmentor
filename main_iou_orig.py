@@ -3,6 +3,7 @@ import pandas as pd
 #from stat_perform import *
 from utilities import *
 
+
 '''
 This program will calculate the IoU per emage per class
 Inputs:
@@ -24,7 +25,7 @@ Output:
 
 tst_path = './datasets/pascal/'
 #mdl_path = './models/deep_lab_v3_plus/'
-mdl_path = './models/TensorFlowHub/'
+mdl_path = './models/slow/'
 csv_in   = 'pascal_segmented_classes_per_image.csv'
 
 mdls = os.listdir(mdl_path)
@@ -50,16 +51,19 @@ for img in image_list:
       #iou_score, ipclass, time_milisecs = iou_per_class(mdl_path + mdl_name + '.tflite', val_path + img, labels)
       #iou_out.append(np.hstack((iou_score, np.squeeze(ipclass), time_milisecs)))
       label = image2segmap(seg_path + os.path.splitext(img)[0] + '.png')
-      time_milisecs, iou_score = meanIou(mdl_path + os.path.splitext(mdl)[0] + '.tflite', val_path + img, seg_path + os.path.splitext(img)[0] + '.png')
-      iou_out.append(np.hstack((iou_score, time_milisecs)))
+      #time_milisecs, iou_score = meanIou(mdl_path + os.path.splitext(mdl)[0] + '.tflite', val_path + img, seg_path + os.path.splitext(img)[0] + '.png')
+      _, iou_score, ioupclass ,time_milisecs = iou_per_pixelclass1(mdl_path + os.path.splitext(mdl)[0] + '.tflite', val_path + img, seg_path + os.path.splitext(img)[0] + '.png')
+      iou_out.append(np.hstack((iou_score, time_milisecs, ioupclass)))
       i=i+1
-      if i == 100:
+      if i == 50:
           break
 iou_out = np.array(iou_out)
 
 # Create header for CSV
-#header = np.hstack(('mIOU', col_head.tolist(), 'Speed (ms)'))
-header = np.hstack(('mIOU', 'Speed (ms)'))
+_, label_names = get_pascal_labels()
+label_names = label_names[:-1]
+header = np.hstack(('mIOU', 'Speed (ms)', label_names))
+#header = np.hstack(('mIOU', 'Speed (ms)'))
 rst =pd.DataFrame(iou_out, columns = header, index = image_list[:iou_out.shape[0]])
 print(rst.head())
 
